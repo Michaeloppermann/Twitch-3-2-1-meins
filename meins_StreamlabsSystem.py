@@ -170,7 +170,6 @@ def StartCountdown():
                     int(countdown["initialValue"])) + " Kekse.")[:490])
         thread = threading.Thread(target=CountdownThread, args=()).start()
 
-
 def CountdownThread():
     global cdVariables, countdown, settings, timeFromLastTick, countdownThreadActive, threadsKeepAlive
 
@@ -195,7 +194,7 @@ def CountdownThread():
         Debug("countdown[\"currentValue\"] " + str(countdown["currentValue"]))
         Debug("(float(countdown[\"initialCountdownTime\"]) / float(counter): " + str(float(countdown["initialCountdownTime"]) / float(counter)))
         # Debug("scaleFactor: " + str(math.sqrt(float(countdown["initialCountdownTime"]) / float(counter))))
-        substract = pow(substractor, float(counter)) + (correctfactor * (float(counter) / countdown["initialCountdownTime"]))
+        substract = (countdown["initialValue"] / pow(countdown["initialCountdownTime"], scale)) * (pow (counter, scale))
         Debug("substract " + str(substract))
         countdown["countdownText"] = str(countdown["currentValue"])
         if countdown["currentValue"] < 1:
