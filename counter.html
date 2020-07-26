@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="odometer.css">
+  <link rel="stylesheet" href="style.css">
+  <title>Odometer</title>
+</head>
+
+<body>
+
+  <h2>Subscribers</h2>
+
+  <div class="subs-odometer">0</div>
+
+  <script src="odometer.js"></script>
+
+  <script>
+
+    var x = setInterval(function() {
+
+      }, 100);
+
+    fetch('Overlay\Countdown.txt')
+    .then(response => response.text())
+    .then(text => value=text);
+
+    const subsOdometer = document.querySelector(".subs-odometer");
+
+    const odometer = new Odometer({
+      el: subsOdometer,
+    })
+
+    odometer.update(value);
+<!--    subsOdometer.innerHTML = value;-->
+
+
+<!--    function readTextFile(file)-->
+<!--    {-->
+<!--        var value;-->
+<!--        var rawFile = new XMLHttpRequest();-->
+<!--        rawFile.open("GET", file, false);-->
+<!--        rawFile.onreadystatechange = function ()-->
+<!--        {-->
+<!--            if(rawFile.readyState === 4)-->
+<!--            {-->
+<!--                if(rawFile.status === 200 || rawFile.status == 0)-->
+<!--                {-->
+<!--                    var value = rawFile.responseText;-->
+<!--                }-->
+<!--            }-->
+<!--        }-->
+<!--        rawFile.send(null);-->
+<!--        return value;-->
+<!--    }-->
+  </script>
+
+
+</body>
+
+</html>

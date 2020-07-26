@@ -1,0 +1,96 @@
+﻿{
+    "output_file": "settings.json",
+
+    "openReadMe": {
+        "type": "button",
+        "label": "Open Readme.txt",
+        "tooltip": "Opens the 'Readme.txt' for this script.",
+        "function": "OpenReadMe",
+        "wsevent": "",
+        "group": ""
+    },
+    "openOverlayFolder": {
+        "type": "button",
+        "label": "Open Overlay Files Folder",
+        "tooltip": "Opens the folder where you can find the Countdown.txt file that can be included in your overlay.",
+        "function": "BtnOpenOverlayFolder",
+        "wsevent": "",
+        "group": ""
+    },
+    "cdInitialCountdownTime": {
+        "type": "slider",
+        "label": "Countdown in minutes",
+        "value": 5,
+        "min": 1,
+        "max": 90,
+        "ticks": 1,
+        "tooltip": "Time of the countdown to be executed.",
+        "group": ""
+    },
+    "cdInitialValue": {
+        "type": "slider",
+        "label": "Initial amount of Kekse",
+        "value": 5000,
+        "min": 1000,
+        "max": 1000000,
+        "ticks": 1000,
+        "tooltip": "Initial price of the game.",
+        "group": ""
+    },
+    "cdCooldown": {
+        "type": "slider",
+        "label": "Cooldown for command '!meins'",
+        "value": 10,
+        "min": 0,
+        "max": 1000,
+        "ticks": 10,
+        "tooltip": "Cooldown for command '!meins'",
+        "group": ""
+    },
+    "cdScale": {
+        "type": "slider",
+        "label": "Scale for countdown function",
+        "value": 1.0,
+        "min": 0,
+        "max": 9,
+        "ticks": 1,
+        "tooltip": "Scale for countdown function. The higher the scale the higher the initial value being substracted from Initial value",
+        "group": ""
+    },
+    "cdCustomText": {
+        "type": "textbox",
+        "value": "FREE!!!",
+        "label": "Custom Text after Countdown",
+        "tooltip": "This text will be used after the Countdown is finished",
+        "group": ""
+    },
+    "cdSetCountdown": {
+        "type": "textbox",
+        "value": "!meinsCountdown",
+        "label": "Set meinsCountdown chat command",
+        "tooltip": "This command will be used when setting a new countdown via twitch chat command. E.g. writing \"!meinsCountdown 300 60\" will set and start a new countdown for 300 (Kekse) and 60 minutes",
+        "group": ""
+    },
+    "meins": {
+        "type": "textbox",
+        "value": "!meins",
+        "label": "User Command to claim game",
+        "tooltip": "This command will be used by user to claim the game",
+        "group": ""
+    },
+    "cdShowCountdownResponse": {
+        "type": "checkbox",
+        "value": true,
+        "label": "Show countdown response",
+        "tooltip": "If turned on, it will display a response message e.g. if the broadcaster writes \"!countdown 300 60\" the response message would be \"Eine neue 3-2-1-meins-Auktion beginnt mit 300 Keksen und 60 Minuten\"",
+        "group": ""
+    },
+    "btnCdStart": {
+        "type": "button",
+        "label": "Reset & Start Countdown",
+        "tooltip": "Starts the Countdown!",
+        "function": "StartBySetting",
+        "wsevent": "",
+        "group": ""
+    }
+}
