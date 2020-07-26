@@ -203,7 +203,6 @@ def CountdownThread():
             countdown["countdownIsRunning"] = False
 
         else:
-            FormatCountdownString()
             countdown["currentValue"] = countdown["initialValue"] - substract
 
         if countdown["oldCountdownText"] != countdown["countdownText"]:
@@ -225,10 +224,12 @@ def GetBase(x, y):
 
 
 def FormatCountdownString():
-    global cdVariables, countdown
+    global cdVariables, countdown, settings
     Debug("FormatCountdownString")
-    string = str(round(countdown["currentValue"]))
-    return string
+    if countdown["countdownText"] == settings["cdCustomText"]:
+        return countdown["countdownText"]
+    else:
+        return str(int(round(countdown["currentValue"])))
 
 
 def Debug(message):

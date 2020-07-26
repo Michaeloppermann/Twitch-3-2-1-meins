@@ -19,22 +19,29 @@
   <script src="odometer.js"></script>
 
   <script>
-
-    var x = setInterval(function() {
-
-      }, 100);
-
-    fetch('Overlay\Countdown.txt')
-    .then(response => response.text())
-    .then(text => value=text);
-
+    var value=0;
+    var oldValue=0;
     const subsOdometer = document.querySelector(".subs-odometer");
-
     const odometer = new Odometer({
       el: subsOdometer,
     })
 
-    odometer.update(value);
+    var x = setInterval(function() {
+    fetch('Overlay\Countdown.txt')
+    .then(response => response.text())
+    .then(text => value=text);
+      }, 100);
+      if (value != oldValue) {
+        odometer.update(value);
+      }
+
+
+
+
+
+
+
+
 <!--    subsOdometer.innerHTML = value;-->
 
 
