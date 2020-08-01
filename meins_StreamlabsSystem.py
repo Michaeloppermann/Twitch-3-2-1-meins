@@ -1,20 +1,15 @@
-#---------------------------------------
+# ---------------------------------------
 #   Import Libraries
-#---------------------------------------
-import sys
-import clr
+# ---------------------------------------
 import time
 import os
 import json
 import threading
 import codecs
-import math
-clr.AddReference("IronPython.SQLite.dll")
-clr.AddReference("IronPython.Modules.dll")
 
-#---------------------------------------
+# ---------------------------------------
 #   [Required] Script Information
-#---------------------------------------
+# ---------------------------------------
 ScriptName = "meins"
 Website = " "
 Description = "Count down a given value exponential in a given time"
@@ -23,7 +18,6 @@ Version = "1.0.0"
 
 configFile = "settings.json"
 path = os.path.dirname(__file__)
-timeFromLastTick = time.time()
 countdown = {
     "oldCountdownText": "",
     "countdownText": "",
@@ -43,13 +37,16 @@ settings = {}
 countdownThreadActive = False
 threadsKeepAlive = True
 debuggingMode = True
-
+pill2kill = threading.Event()
+pause = False
 
 def Init():
-    global configFile, path, settings, threadsKeepAlive
-    path = os.path.dirname(__file__)
-    Debug("Init")    
-
+    global configFile, path, settings, threadsKeepAlive, pill2kill, pause
+    Debug("Init")
+    threadsKeepAlive = True
+    pause = False
+    # kill old processes
+    pill2kill.set()
     # create subfolder if it doesnt exist
     if not os.path.exists(os.path.dirname(os.path.join(path, countdown["countdownFileName"]))):
         os.makedirs(os.path.dirname(os.path.join(path, countdown["countdownFileName"])))
@@ -67,30 +64,14 @@ def Init():
             countdown["initialValue"] = settings["cdInitialValue"]
             countdown["initialCountdownTime"] = settings["cdInitialCountdownTime"] * 60
             countdown["scale"] = settings["cdScale"]
-            Debug("countdown[\"currentValue\"] " + str(countdown["currentValue"]))
-            Debug("countdown[\"initialValue\"] " + str(countdown["initialValue"]))
-            Debug("countdown[\"scale\"] " + str(countdown["scale"]))
-            Debug("countdown[\"initialCountdownTime\"] " + str(countdown["initialCountdownTime"]))
+            Debug(""
+                  + " countdown: " + str(countdown))
             Parent.AddCooldown(ScriptName, settings["meins"], int(settings["cdCooldown"]))
     except:
         settings = {
             "cdInitialCountdownTime": 6,
             "cdCustomText": "Countdown done. Starting soon."
         }
-
-    # load countdown from json file
-    # try:
-    #     path = os.path.dirname(__file__)
-    #     with codecs.open(os.path.join(path, countdown["countdownJsonFileName"]), encoding='utf-8-sig',
-    #                      mode='r') as file:
-    #         countdown["currentValue"] = json.load(file, encoding='utf-8-sig')["currentValue"]
-    #         if countdown["currentValue"] > 0:
-    #             StartCountdown()
-    #         else:
-    #             threadsKeepAlive = False
-    # except:
-    #     pass
-
     return
 
 
@@ -130,32 +111,44 @@ def Execute(data):
     return
 
 
-#---------------------------------------
+# ---------------------------------------
 # Reload Settings on Save
-#---------------------------------------
+# ---------------------------------------
 def ReloadSettings(jsonData):
+    global threadsKeepAlive
     Debug("ReloadSettings")
-
     Init()
     return
 
 
-def StartBySetting():
-    global countdown, settings, countdownThreadActive
-
-    Debug("StartBySetting")
-    Debug("countdown[\"currentValue\"] " + str(countdown["currentValue"]))
-    Debug("countdown[\"initialValue\"] " + str(countdown["initialValue"]))
-    Debug("countdown[\"scale\"] " + str(countdown["scale"]))
-    Debug("countdown[\"initialCountdownTime\"] " + str(countdown["initialCountdownTime"]))
+def ResetAndStartCountdown():
+    global countdownThreadActive
+    Debug("ResetAndStartCountdown:"
+          + " countdownThreadActive: " + str(countdownThreadActive))
+    Init()
     StartCountdown()
+
+def Pause():
+    global pause
+    pause = True
+    Debug("Pause: "
+          + " pause: " + str(pause))
+
+def Continue():
+    global pause
+    pause = False
+    Debug("Continue: "
+          + " pause: " + str(pause))
 
 
 def StartCountdown():
-    global countdown, settings, countdownThreadActive
+    global countdown, settings, countdownThreadActive, pill2kill
 
-    Debug("StartCountdown")
-
+    Debug("StartCountdown:"
+          + " countdown: " + str(countdown)
+          + " settings: " + str(settings)
+          + " pill2kill: " + str(pill2kill)
+          + " countdownThreadActive: " + str(countdownThreadActive))
     countdown["oldCountdownText"] = " "
     with codecs.open(os.path.join(path, countdown["countdownFileName"]), encoding='utf-8-sig', mode='w+') as file:
         file.write(" ")
@@ -168,67 +161,72 @@ def StartCountdown():
             Parent.SendTwitchMessage(
                 ("New countdown set to " + str(int(countdown["initialCountdownTime"] / 60)) + " minutes and " + str(
                     int(countdown["initialValue"])) + " Kekse.")[:490])
-        thread = threading.Thread(target=CountdownThread, args=()).start()
+            pill2kill = threading.Event()
+            threading.Thread(target=CountdownThread, args=(pill2kill, "task")).start()
 
-def CountdownThread():
-    global cdVariables, countdown, settings, timeFromLastTick, countdownThreadActive, threadsKeepAlive
 
-    Debug("CountDownThread, countdown[\"currentValue\"] " + str(countdown["currentValue"]))
+def CountdownThread(stop_event, arg):
+    global countdown, settings, countdownThreadActive, threadsKeepAlive, pause
+
+    Debug("CountDownThread: "
+          + " countdown: " + str(countdown)
+          + " settings: " + str(settings)
+          + " countdownThreadActive: " + str(countdownThreadActive)
+          + " threadsKeepAlive: " + str(threadsKeepAlive)
+          + " pause: " + str(pause)
+          + " stop_event.is_set(): " + str(stop_event.is_set()))
+
     with codecs.open(os.path.join(path, countdown["countdownFileName"]), encoding='utf-8-sig', mode="w+") as file:
         file.write(FormatCountdownString())
     countdownThreadActive = True
-    counter = 0
-    scale = countdown["scale"]
-    correctfactor = scale * float(countdown["initialValue"]) / 10
-    base = float(GetBase(countdown["initialValue"] - correctfactor, countdown["initialCountdownTime"]))
-    substractor = base
-    Debug("substractor " + str(substractor))
-    Debug("countdown[\"currentValue\"] " + str(countdown["currentValue"]))
-    Debug("countdown[\"initialCountdownTime\"] " + str(countdown["initialCountdownTime"]))
+    counter = 1
 
-    Debug("threadsKeepAlive " + str(threadsKeepAlive))
-    while countdown["countdownIsRunning"] and threadsKeepAlive and counter <= countdown["initialCountdownTime"]:
-        counter += 1
-        Debug("counter: " + str(counter))
-        Debug("threadsKeepAlive: " + str(threadsKeepAlive))
-        Debug("countdown[\"currentValue\"] " + str(countdown["currentValue"]))
-        Debug("(float(countdown[\"initialCountdownTime\"]) / float(counter): " + str(float(countdown["initialCountdownTime"]) / float(counter)))
-        # Debug("scaleFactor: " + str(math.sqrt(float(countdown["initialCountdownTime"]) / float(counter))))
-        substract = (countdown["initialValue"] / pow(countdown["initialCountdownTime"], scale)) * (pow (counter, scale))
-        Debug("substract " + str(substract))
-        countdown["countdownText"] = str(countdown["currentValue"])
-        if countdown["currentValue"] < 1:
-            countdown["countdownText"] = settings["cdCustomText"]
-            countdown["countdownIsRunning"] = False
+    while countdown["countdownIsRunning"] and threadsKeepAlive and counter <= countdown["initialCountdownTime"] and not stop_event.is_set():
+        if not pause:
+            substractor = calculate_value(countdown["initialCountdownTime"], countdown["initialValue"], countdown["scale"], counter)
+            Debug("substractor " + str(substractor))
+            countdown["countdownText"] = str(countdown["currentValue"])
+            countdown["currentValue"] = countdown["initialValue"] - substractor
+            Debug("countdown[\"currentValue\"]: " + str(countdown["currentValue"]))
 
-        else:
-            countdown["currentValue"] = countdown["initialValue"] - substract
+            if countdown["currentValue"] < 1.0:
+                countdown["countdownText"] = settings["cdCustomText"]
+                countdown["countdownIsRunning"] = False
+                threadsKeepAlive = False
 
-        if countdown["oldCountdownText"] != countdown["countdownText"]:
-            # write countdown to overlay file
-            with codecs.open(os.path.join(path, countdown["countdownFileName"]), encoding='utf-8-sig', mode="w+") as file:
-                file.write(FormatCountdownString())
-            # write countdown to json file in case of "reload scripts" or streamlabs chatbot is shut down
-            with codecs.open(os.path.join(path, countdown["countdownJsonFileName"]), encoding='utf-8-sig', mode='w+') as file:
-                json.dump({"currentValue": countdown["countdownText"]}, file)
-            countdown["oldCountdownText"] = countdown["countdownText"]
-        time.sleep(1)
+            if countdown["oldCountdownText"] != countdown["countdownText"]:
+                # write countdown to overlay file
+                with codecs.open(os.path.join(path, countdown["countdownFileName"]), encoding='utf-8-sig', mode="w+") as file:
+                    file.write(FormatCountdownString())
+                # write countdown to json file in case of "reload scripts" or streamlabs chatbot is shut down
+                with codecs.open(os.path.join(path, countdown["countdownJsonFileName"]), encoding='utf-8-sig', mode='w+') as file:
+                    json.dump({"currentValue": countdown["countdownText"]}, file)
+                countdown["oldCountdownText"] = countdown["countdownText"]
+            counter += 1
+            time.sleep(1)
+
     countdownThreadActive = False
     threadsKeepAlive = True
 
 
-def GetBase(x, y):
-    Debug("GetBase x, y, 1/y, pow(x,1/y)" + str(x) + ", " + str(y) + ", " + str(1.0/y) + ", " + str(pow(x, 1.0/y)))
-    return pow(x, 1.0/y)
+def calculate_value(initialCountdownTime, initialValue, scale, counter):
+    Debug("CalculateValue with values: initialCountdownTime:" + str(initialCountdownTime) + " initialValue:" + str(initialValue) + " scale:" + str(scale) + " counter:" + str(counter))
+    substractor1 = pow(float(initialCountdownTime), float(scale))
+    substractor2 = float(initialValue) / substractor1
+    substractor3 = pow(float(counter), float(scale))
+    Debug("substractor1: " + str(substractor1) + " substractor2: " + str(substractor2) + " substractor3: " + str(substractor3))
+    return round(substractor2 * substractor3)
 
 
 def FormatCountdownString():
-    global cdVariables, countdown, settings
-    Debug("FormatCountdownString")
+    global countdown, settings
+    Debug("FormatCountdownString:"
+          + " countdown" + str(countdown)
+          + " settings" + str(settings))
     if countdown["countdownText"] == settings["cdCustomText"]:
         return countdown["countdownText"]
     else:
-        return str(int(round(countdown["currentValue"])))
+        return str(int(countdown["currentValue"]))
 
 
 def Debug(message):
@@ -253,14 +251,21 @@ def ScriptToggled(state):
 
 
 def OpenReadMe():
+    global path
     """Open the readme.txt in the scripts folder"""
-    location = os.path.join(os.path.dirname(__file__), "README.txt")
+    location = os.path.join(path, "README.txt")
     os.startfile(location)
     return
 
 
 def BtnOpenOverlayFolder():
+    global path
     """Open the folder where the user can find the index.html"""
-    location = os.path.join(os.path.dirname(__file__), "Overlay")
+    location = os.path.join(path, "Overlay")
     os.startfile(location)
+    return
+
+
+def Unload():
+    pill2kill.set()
     return

@@ -51,10 +51,10 @@
         "type": "slider",
         "label": "Scale for countdown function",
         "value": 1.0,
-        "min": 0,
-        "max": 9,
+        "min": 1,
+        "max": 10,
         "ticks": 1,
-        "tooltip": "Scale for countdown function. The higher the scale the higher the initial value being substracted from Initial value",
+        "tooltip": "Scale for countdown function. The higher the scale the lower the initial value being substracted from Initial value",
         "group": ""
     },
     "cdCustomText": {
@@ -89,7 +89,23 @@
         "type": "button",
         "label": "Reset & Start Countdown",
         "tooltip": "Starts the Countdown!",
-        "function": "StartBySetting",
+        "function": "ResetAndStartCountdown",
+        "wsevent": "",
+        "group": ""
+    },
+    "btnPause": {
+        "type": "button",
+        "label": "Pause Countdown",
+        "tooltip": "Pauses the Countdown!",
+        "function": "Pause",
+        "wsevent": "",
+        "group": ""
+    },
+    "btnContinue": {
+        "type": "button",
+        "label": "Continue Countdown",
+        "tooltip": "Continues the Countdown!",
+        "function": "Continue",
         "wsevent": "",
         "group": ""
     }
