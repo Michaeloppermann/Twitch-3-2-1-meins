@@ -6,6 +6,7 @@ import os
 import json
 import threading
 import codecs
+import re
 
 # ---------------------------------------
 #   [Required] Script Information
@@ -39,6 +40,8 @@ threadsKeepAlive = True
 debuggingMode = True
 pill2kill = threading.Event()
 pause = False
+htmlFileName = "counter2.html"
+pattern = re.compile(r"(subsOdometer\.textContent = .*<!---->)+")
 
 def Init():
     global configFile, path, settings, threadsKeepAlive, pill2kill, pause
@@ -64,15 +67,38 @@ def Init():
             countdown["initialValue"] = settings["cdInitialValue"]
             countdown["initialCountdownTime"] = settings["cdInitialCountdownTime"] * 60
             countdown["scale"] = settings["cdScale"]
+            countdown["countdownText"] = countdown["initialValue"]
             Debug(""
                   + " countdown: " + str(countdown))
             Parent.AddCooldown(ScriptName, settings["meins"], int(settings["cdCooldown"]))
+        #ReplaceInHtml()
+
     except:
         settings = {
             "cdInitialCountdownTime": 6,
             "cdCustomText": "Countdown done. Starting soon."
         }
     return
+
+
+def ReplaceInHtml():
+    global htmlFileName, countdown
+    Debug("ReplaceInHtml: "
+          + "htmlFileName: "
+          + str(htmlFileName)
+          + " countdown"
+          + str(countdown))
+    with codecs.open(os.path.join(path, htmlFileName), encoding='utf-8-sig', mode='r') as file:
+        oldcontent = file.read()
+        Debug("read")
+        content = pattern.sub("subsOdometer.textContent = "
+                              + FormatCountdownString()
+                              + "<!---->"
+                              , str(oldcontent))
+        Debug("read2")
+        Debug(content)
+    with codecs.open(os.path.join(path, htmlFileName), encoding='utf-8-sig', mode='w+') as file:
+        file.write(content)
 
 
 def Execute(data):
@@ -102,8 +128,7 @@ def Execute(data):
         if data.GetParamCount() == 1 and data.GetParam(0).lower() == settings["meins"].lower() and countdownThreadActive and not Parent.IsOnCooldown(ScriptName, settings["meins"]):
             Parent.SendTwitchMessage(
                 ( data.UserName + " hat sich das Spiel fuer " + str(int(round(countdown["currentValue"]))) + " Kekse gesnaggt!")[:490])
-            threadsKeepAlive = False
-            countdownThreadActive = False
+            Pause()
 
         if data.GetParam(0).lower() == settings["cdSetCountdown"].lower():
             StartCountdown()
@@ -195,6 +220,7 @@ def CountdownThread(stop_event, arg):
                 threadsKeepAlive = False
 
             if countdown["oldCountdownText"] != countdown["countdownText"]:
+                #ReplaceInHtml()
                 # write countdown to overlay file
                 with codecs.open(os.path.join(path, countdown["countdownFileName"]), encoding='utf-8-sig', mode="w+") as file:
                     file.write(FormatCountdownString())

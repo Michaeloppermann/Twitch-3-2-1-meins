@@ -5,64 +5,48 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+<!--  <meta http-equiv="refresh" content="0.5" />-->
   <link rel="stylesheet" href="odometer.css">
   <link rel="stylesheet" href="style.css">
   <title>Odometer</title>
 </head>
 
 <body>
+  <input type="file" name="inputfile"
+            id="inputfile">
 
-  <h2>Subscribers</h2>
-
-  <div class="subs-odometer">0</div>
+  <div class="subs-odometer">102s330</div>
 
   <script src="odometer.js"></script>
 
   <script>
-    var value=0;
-    var oldValue=0;
+
     const subsOdometer = document.querySelector(".subs-odometer");
     const odometer = new Odometer({
       el: subsOdometer,
-    })
+    });
+    const input = document.getElementById('inputfile');
+    var event = new Event('update');
+<!--    input.addEventListener('change', function() {-->
+
+<!--            var fr=new FileReader();-->
+<!--            fr.onload=function(){-->
+<!--                odometer.update(fr.result);-->
+<!--            }-->
+<!--            fr.readAsText(this.files[0]);-->
+<!--        })-->
 
     var x = setInterval(function() {
-    fetch('Overlay\Countdown.txt')
-    .then(response => response.text())
-    .then(text => value=text);
-      }, 100);
-      if (value != oldValue) {
-        odometer.update(value);
-      }
+      var fr=new FileReader();
+            fr.onload=function(){
+                odometer.update(fr.result);
+            }
+            fr.readAsText(this.files[0]);
+<!--      input.dispatchEvent(event)-->
+
+    }, 100);
 
 
-
-
-
-
-
-
-<!--    subsOdometer.innerHTML = value;-->
-
-
-<!--    function readTextFile(file)-->
-<!--    {-->
-<!--        var value;-->
-<!--        var rawFile = new XMLHttpRequest();-->
-<!--        rawFile.open("GET", file, false);-->
-<!--        rawFile.onreadystatechange = function ()-->
-<!--        {-->
-<!--            if(rawFile.readyState === 4)-->
-<!--            {-->
-<!--                if(rawFile.status === 200 || rawFile.status == 0)-->
-<!--                {-->
-<!--                    var value = rawFile.responseText;-->
-<!--                }-->
-<!--            }-->
-<!--        }-->
-<!--        rawFile.send(null);-->
-<!--        return value;-->
-<!--    }-->
   </script>
 
 

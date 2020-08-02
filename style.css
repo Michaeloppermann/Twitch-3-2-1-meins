@@ -14,9 +14,9 @@ body {
   background:#eee;
 }
 
-.subs-odometer {
+.subs-odometer2 {
   font-size:48px;
-  background:red;
+  background:#9147ff;
   color:white;
   font-family: "Raleway", sans-serif;
   font-weight:bold;
@@ -25,11 +25,4 @@ body {
   text-align: center;
   padding: 8px;
   letter-spacing: 4px;
-}
-
-h2 {
-  font-size: 32px;
-  text-transform: uppercase;
-  letter-spacing: 8px;
-  margin: 24px;
 }
