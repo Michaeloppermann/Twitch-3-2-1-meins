@@ -6,5 +6,5 @@
   "meins": "!meins",
   "cdShowCountdownResponse": true,
   "cdCooldown": 10.0,
-  "cdScale": 1
+  "cdScale": 1.0
 }

@@ -40,8 +40,8 @@ threadsKeepAlive = True
 debuggingMode = True
 pill2kill = threading.Event()
 pause = False
+pattern = re.compile("(<div class=\"subs-odometer\">.*<\/div>)+")
 htmlFileName = "counter2.html"
-pattern = re.compile(r"(subsOdometer\.textContent = .*<!---->)+")
 
 def Init():
     global configFile, path, settings, threadsKeepAlive, pill2kill, pause
@@ -71,7 +71,7 @@ def Init():
             Debug(""
                   + " countdown: " + str(countdown))
             Parent.AddCooldown(ScriptName, settings["meins"], int(settings["cdCooldown"]))
-        #ReplaceInHtml()
+        ReplaceInHtml()
 
     except:
         settings = {
@@ -91,9 +91,9 @@ def ReplaceInHtml():
     with codecs.open(os.path.join(path, htmlFileName), encoding='utf-8-sig', mode='r') as file:
         oldcontent = file.read()
         Debug("read")
-        content = pattern.sub("subsOdometer.textContent = "
+        content = pattern.sub("<div class=\"subs-odometer\">"
                               + FormatCountdownString()
-                              + "<!---->"
+                              + "</div>"
                               , str(oldcontent))
         Debug("read2")
         Debug(content)
@@ -205,6 +205,8 @@ def CountdownThread(stop_event, arg):
         file.write(FormatCountdownString())
     countdownThreadActive = True
     counter = 1
+    countdown["countdownText"] = str(countdown["initialValue"])
+    ReplaceInHtml()
 
     while countdown["countdownIsRunning"] and threadsKeepAlive and counter <= countdown["initialCountdownTime"] and not stop_event.is_set():
         if not pause:
@@ -220,7 +222,7 @@ def CountdownThread(stop_event, arg):
                 threadsKeepAlive = False
 
             if countdown["oldCountdownText"] != countdown["countdownText"]:
-                #ReplaceInHtml()
+                ReplaceInHtml()
                 # write countdown to overlay file
                 with codecs.open(os.path.join(path, countdown["countdownFileName"]), encoding='utf-8-sig', mode="w+") as file:
                     file.write(FormatCountdownString())
