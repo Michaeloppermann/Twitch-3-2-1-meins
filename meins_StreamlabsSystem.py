@@ -40,14 +40,12 @@ threadsKeepAlive = True
 debuggingMode = True
 pill2kill = threading.Event()
 pause = False
-pattern = re.compile("(<div class=\"subs-odometer\">.*<\/div>)+")
-htmlFileName = "counter2.html"
 
 def Init():
     global configFile, path, settings, threadsKeepAlive, pill2kill, pause
     Debug("Init")
     threadsKeepAlive = True
-    pause = False
+    pause = True
     # kill old processes
     pill2kill.set()
     # create subfolder if it doesnt exist
@@ -69,9 +67,10 @@ def Init():
             countdown["scale"] = settings["cdScale"]
             countdown["countdownText"] = countdown["initialValue"]
             Debug(""
-                  + " countdown: " + str(countdown))
+                  + " countdown: "
+                  + str(countdown)
+                  )
             Parent.AddCooldown(ScriptName, settings["meins"], int(settings["cdCooldown"]))
-        ReplaceInHtml()
 
     except:
         settings = {
@@ -81,31 +80,17 @@ def Init():
     return
 
 
-def ReplaceInHtml():
-    global htmlFileName, countdown
-    Debug("ReplaceInHtml: "
-          + "htmlFileName: "
-          + str(htmlFileName)
-          + " countdown"
-          + str(countdown))
-    with codecs.open(os.path.join(path, htmlFileName), encoding='utf-8-sig', mode='r') as file:
-        oldcontent = file.read()
-        Debug("read")
-        content = pattern.sub("<div class=\"subs-odometer\">"
-                              + FormatCountdownString()
-                              + "</div>"
-                              , str(oldcontent))
-        Debug("read2")
-        Debug(content)
-    with codecs.open(os.path.join(path, htmlFileName), encoding='utf-8-sig', mode='w+') as file:
-        file.write(content)
-
-
 def Execute(data):
     global settings, cdVariables, countdown, threadsKeepAlive, countdownThreadActive
 
     Debug("Execute")
-    Debug("data.IsChatMessage(), data.GetParamCount()" + " " + str(data.IsChatMessage()) + " " + str(data.GetParamCount()))
+    Debug(
+        "data.IsChatMessage(), data.GetParamCount()"
+        + " "
+        + str(data.IsChatMessage())
+        + " "
+        + str(data.GetParamCount())
+    )
 
     if data.IsChatMessage():
         # sets new countdown and starts it
@@ -123,12 +108,18 @@ def Execute(data):
                 except ValueError:
                     if settings["cdShowCountdownResponse"]:
                         Parent.SendTwitchMessage(
-                            ("Incorrect usage. Write " + settings["cdSetCountdown"] + " <seconds> to set the new countdown.")[:490])
+                            ("Incorrect usage. Write " + settings["cdSetCountdown"]
+                             + " <seconds> to set the new countdown.")[:490])
 
-        if data.GetParamCount() == 1 and data.GetParam(0).lower() == settings["meins"].lower() and countdownThreadActive and not Parent.IsOnCooldown(ScriptName, settings["meins"]):
-            Parent.SendTwitchMessage(
-                ( data.UserName + " hat sich das Spiel fuer " + str(int(round(countdown["currentValue"]))) + " Kekse gesnaggt!")[:490])
+        if  data.GetParamCount() == 1 \
+                and data.GetParam(0).lower() == settings["meins"].lower() \
+                and countdownThreadActive \
+                and not Parent.IsOnCooldown(ScriptName, settings["meins"]) \
+                and not pause:
             Pause()
+            Parent.SendTwitchMessage(
+                ( data.UserName + " hat sich das Spiel fuer "
+                  + str(int(round(countdown["currentValue"]))) + " Kekse gesnaggt!")[:490])
 
         if data.GetParam(0).lower() == settings["cdSetCountdown"].lower():
             StartCountdown()
@@ -153,11 +144,13 @@ def ResetAndStartCountdown():
     Init()
     StartCountdown()
 
+
 def Pause():
     global pause
     pause = True
     Debug("Pause: "
           + " pause: " + str(pause))
+
 
 def Continue():
     global pause
@@ -175,10 +168,12 @@ def StartCountdown():
           + " pill2kill: " + str(pill2kill)
           + " countdownThreadActive: " + str(countdownThreadActive))
     countdown["oldCountdownText"] = " "
-    with codecs.open(os.path.join(path, countdown["countdownFileName"]), encoding='utf-8-sig', mode='w+') as file:
-        file.write(" ")
-    with codecs.open(os.path.join(path, countdown["countdownJsonFileName"]), encoding='utf-8-sig', mode='w+') as file:
-        json.dump({"currentValue": 0}, file)
+    with codecs.open(os.path.join(path, countdown["countdownFileName"]),
+                     encoding='utf-8-sig', mode='w+') as countdownFile:
+        countdownFile.write(" ")
+    with codecs.open(os.path.join(path, countdown["countdownJsonFileName"]),
+                     encoding='utf-8-sig', mode='w+') as countdownJsonFile:
+        json.dump({"currentValue": 0}, countdownJsonFile)
 
     countdown["countdownIsRunning"] = True
     if not countdownThreadActive:
@@ -187,6 +182,7 @@ def StartCountdown():
                 ("New countdown set to " + str(int(countdown["initialCountdownTime"] / 60)) + " minutes and " + str(
                     int(countdown["initialValue"])) + " Kekse.")[:490])
             pill2kill = threading.Event()
+            Continue()
             threading.Thread(target=CountdownThread, args=(pill2kill, "task")).start()
 
 
@@ -201,16 +197,23 @@ def CountdownThread(stop_event, arg):
           + " pause: " + str(pause)
           + " stop_event.is_set(): " + str(stop_event.is_set()))
 
-    with codecs.open(os.path.join(path, countdown["countdownFileName"]), encoding='utf-8-sig', mode="w+") as file:
-        file.write(FormatCountdownString())
+    with codecs.open(os.path.join(path, countdown["countdownFileName"]),
+                     encoding='utf-8-sig', mode="w+") as countdownFile:
+        countdownFile.write(FormatCountdownString())
     countdownThreadActive = True
     counter = 1
     countdown["countdownText"] = str(countdown["initialValue"])
-    ReplaceInHtml()
 
-    while countdown["countdownIsRunning"] and threadsKeepAlive and counter <= countdown["initialCountdownTime"] and not stop_event.is_set():
+    while countdown["countdownIsRunning"] \
+            and threadsKeepAlive \
+            and counter <= countdown["initialCountdownTime"] \
+            and not stop_event.is_set():
         if not pause:
-            substractor = calculate_value(countdown["initialCountdownTime"], countdown["initialValue"], countdown["scale"], counter)
+            substractor = calculate_value(
+                countdown["initialCountdownTime"],
+                countdown["initialValue"],
+                countdown["scale"],
+                counter)
             Debug("substractor " + str(substractor))
             countdown["countdownText"] = str(countdown["currentValue"])
             countdown["currentValue"] = countdown["initialValue"] - substractor
@@ -222,13 +225,14 @@ def CountdownThread(stop_event, arg):
                 threadsKeepAlive = False
 
             if countdown["oldCountdownText"] != countdown["countdownText"]:
-                ReplaceInHtml()
                 # write countdown to overlay file
-                with codecs.open(os.path.join(path, countdown["countdownFileName"]), encoding='utf-8-sig', mode="w+") as file:
-                    file.write(FormatCountdownString())
+                with codecs.open(os.path.join(path, countdown["countdownFileName"]),
+                                 encoding='utf-8-sig', mode="w+") as countdownFile:
+                    countdownFile.write(FormatCountdownString())
                 # write countdown to json file in case of "reload scripts" or streamlabs chatbot is shut down
-                with codecs.open(os.path.join(path, countdown["countdownJsonFileName"]), encoding='utf-8-sig', mode='w+') as file:
-                    json.dump({"currentValue": countdown["countdownText"]}, file)
+                with codecs.open(os.path.join(path, countdown["countdownJsonFileName"]),
+                                 encoding='utf-8-sig', mode='w+') as countdownJsonFile:
+                    json.dump({"currentValue": countdown["countdownText"]}, countdownJsonFile)
                 countdown["oldCountdownText"] = countdown["countdownText"]
             counter += 1
             time.sleep(1)
@@ -238,11 +242,27 @@ def CountdownThread(stop_event, arg):
 
 
 def calculate_value(initialCountdownTime, initialValue, scale, counter):
-    Debug("CalculateValue with values: initialCountdownTime:" + str(initialCountdownTime) + " initialValue:" + str(initialValue) + " scale:" + str(scale) + " counter:" + str(counter))
+    Debug(
+        "CalculateValue with values: initialCountdownTime:"
+        + str(initialCountdownTime)
+        + " initialValue:"
+        + str(initialValue)
+        + " scale:"
+        + str(scale)
+        + " counter:"
+        + str(counter)
+    )
     substractor1 = pow(float(initialCountdownTime), float(scale))
     substractor2 = float(initialValue) / substractor1
     substractor3 = pow(float(counter), float(scale))
-    Debug("substractor1: " + str(substractor1) + " substractor2: " + str(substractor2) + " substractor3: " + str(substractor3))
+    Debug(
+        "substractor1: "
+        + str(substractor1)
+        + " substractor2: "
+        + str(substractor2)
+        + " substractor3: "
+        + str(substractor3)
+    )
     return round(substractor2 * substractor3)
 
 
