@@ -31,7 +31,7 @@
         "type": "slider",
         "label": "Initial amount of Kekse",
         "value": 10000,
-        "min": 1000,
+        "min": 10000,
         "max": 200000,
         "ticks": 10000,
         "tooltip": "Initial price of the game.",
