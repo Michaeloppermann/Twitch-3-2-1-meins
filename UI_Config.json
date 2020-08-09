@@ -30,7 +30,7 @@
     "cdInitialValue": {
         "type": "slider",
         "label": "Initial amount of Kekse",
-        "value": 5000,
+        "value": 10000,
         "min": 1000,
         "max": 200000,
         "ticks": 10000,
