@@ -120,6 +120,8 @@ def Execute(data):
             Parent.SendTwitchMessage(
                 ( data.UserName + " hat sich das Spiel fuer "
                   + str(int(round(countdown["currentValue"]))) + " Kekse gesnaggt!")[:490])
+            result = Parent.PlaySound("happykids.mp3", 1.0)
+            Debug("Result of playsound: " + str(result))
 
         if data.GetParam(0).lower() == settings["cdSetCountdown"].lower():
             StartCountdown()
